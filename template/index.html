@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicGuide AI — Your Election Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,800;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0d0d0f;
+    --paper: #f8f5ef;
+    --accent: #e8401a;
+    --accent2: #1a6ee8;
+    --muted: #6b6860;
+    --border: #e0dcd4;
+    --card: #ffffff;
+    --prep: #f59e0b;
+    --campaign: #3b82f6;
+    --voting: #10b981;
+    --results: #8b5cf6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 3px solid var(--accent);
+  }
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .country-select {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--paper);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+  }
+  .country-select option { background: var(--ink); }
+  .tab-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.7);
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn.active, .tab-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* HERO */
+  .hero {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 40%, rgba(232,64,26,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 60%, rgba(26,110,232,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 0.3rem 0.8rem;
+    border-radius: 3px;
+    margin-bottom: 1.2rem;
+  }
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero p {
+    font-size: 1.05rem;
+    color: rgba(248,245,239,0.65);
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+  }
+  .quick-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  .chip {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(248,245,239,0.8);
+    padding: 0.45rem 1rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .chip:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  /* MAIN LAYOUT */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* TIMELINE */
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .section-sub {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin-bottom: 1.5rem;
+  }
+  .load-timeline-btn {
+    background: var(--ink);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .load-timeline-btn:hover { background: var(--accent); }
+  .load-timeline-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .phase-legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .phase-dot {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .phase-dot::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--prep);
+  }
+  .phase-dot.campaign::before { background: var(--campaign); }
+  .phase-dot.voting::before { background: var(--voting); }
+  .phase-dot.results::before { background: var(--results); }
+
+  .timeline {
+    position: relative;
+    padding-left: 2.5rem;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-step {
+    position: relative;
+    margin-bottom: 1.5rem;
+    animation: slideIn 0.4s ease both;
+  }
+  .timeline-step:nth-child(1) { animation-delay: 0.05s; }
+  .timeline-step:nth-child(2) { animation-delay: 0.1s; }
+  .timeline-step:nth-child(3) { animation-delay: 0.15s; }
+  .timeline-step:nth-child(4) { animation-delay: 0.2s; }
+  .timeline-step:nth-child(5) { animation-delay: 0.25s; }
+  .timeline-step:nth-child(6) { animation-delay: 0.3s; }
+  .timeline-step:nth-child(7) { animation-delay: 0.35s; }
+  .timeline-step:nth-child(8) { animation-delay: 0.4s; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .step-node {
+    position: absolute;
+    left: -2.5rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--prep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    top: 0.8rem;
+    border: 3px solid var(--paper);
+    box-shadow: 0 0 0 2px var(--border);
+  }
+  .step-node.campaign { background: var(--campaign); }
+  .step-node.voting { background: var(--voting); }
+  .step-node.results { background: var(--results); }
+
+  .step-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .step-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transform: translateX(4px);
+  }
+  .step-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .step-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .step-duration {
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+    background: var(--paper);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+  .step-desc {
+    color: var(--muted);
+    font-size: 0.84rem;
+    margin-top: 0.4rem;
+    line-height: 1.5;
+  }
+  .step-ask-btn {
+    margin-top: 0.6rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--accent2);
+    padding: 0.25rem 0.7rem;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .step-ask-btn:hover { background: var(--accent2); color: white; border-color: var(--accent2); }
+
+  .timeline-placeholder {
+    background: var(--card);
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    color: var(--muted);
+  }
+  .timeline-placeholder .big-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+
+  /* CHAT */
+  .chat-view-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .chat-messages {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.2rem;
+    height: 480px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    scroll-behavior: smooth;
+  }
+  .message {
+    display: flex;
+    gap: 0.8rem;
+    animation: fadeUp 0.3s ease;
+    max-width: 100%;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .message.user { flex-direction: row-reverse; }
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  .avatar.bot { background: var(--ink); }
+  .avatar.user { background: var(--accent); color: white; font-size: 0.75rem; font-weight: 600; }
+  .bubble {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    max-width: 85%;
+  }
+  .message.user .bubble {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .bubble strong { font-weight: 600; }
+  .bubble ul { margin: 0.4rem 0 0.4rem 1.2rem; }
+  .bubble li { margin-bottom: 0.2rem; }
+  .bubble p { margin-bottom: 0.5rem; }
+  .bubble p:last-child { margin-bottom: 0; }
+  .typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 0.5rem 0;
+  }
+  .typing span {
+    width: 7px; height: 7px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  .chat-input-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .chat-input {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    background: var(--card);
+    resize: none;
+  }
+  .chat-input:focus { border-color: var(--accent2); }
+  .send-btn {
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .send-btn:hover { background: var(--accent); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* SIDEBAR */
+  .sidebar { position: sticky; top: 80px; }
+  .sidebar-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  .sidebar-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .fact-item {
+    border-bottom: 1px solid var(--border);
+    padding: 0.7rem 0;
+    font-size: 0.83rem;
+    line-height: 1.5;
+  }
+  .fact-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .fact-item strong { color: var(--accent); display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.2rem; }
+
+  .quiz-card { }
+  .quiz-question {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.8rem;
+    line-height: 1.4;
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 0.4rem; }
+  .quiz-option {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .quiz-option:hover { border-color: var(--accent2); color: var(--accent2); }
+  .quiz-option.correct { background: #d1fae5; border-color: var(--voting); color: #065f46; }
+  .quiz-option.wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .quiz-feedback { font-size: 0.8rem; margin-top: 0.6rem; color: var(--muted); }
+  .next-quiz-btn {
+    margin-top: 0.6rem;
+    background: var(--ink);
+    color: white;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .next-quiz-btn:hover { background: var(--accent); }
+
+  /* LOADING */
+  .spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* FULL CHAT VIEW (mobile fallback) */
+  .full-chat { grid-column: 1 / -1; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .main { grid-template-columns: 1fr; padding: 1rem; }
+    .sidebar { position: static; }
+    .hero { padding: 2.5rem 1rem 2rem; }
+    .hero h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Civic<span>Guide AI</span></div>
+  <div class="header-right">
+    <select class="country-select" id="countrySelect">
+      <option value="India">🇮🇳 India</option>
+      <option value="United States">🇺🇸 United States</option>
+      <option value="United Kingdom">🇬🇧 United Kingdom</option>
+      <option value="Australia">🇦🇺 Australia</option>
+      <option value="Canada">🇨🇦 Canada</option>
+      <option value="Germany">🇩🇪 Germany</option>
+      <option value="France">🇫🇷 France</option>
+      <option value="Japan">🇯🇵 Japan</option>
+      <option value="Brazil">🇧🇷 Brazil</option>
+    </select>
+    <button class="tab-btn active" id="tabTimeline" onclick="switchView('timeline')">📅 Timeline</button>
+    <button class="tab-btn" id="tabChat" onclick="switchView('chat')">💬 Ask CivicGuide AI</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">Civic Education · AI Powered</div>
+  <h1>Understand <em>Every</em> Step of an Election</h1>
+  <p>Interactive timelines, instant answers, and fun quizzes — your complete guide to how democracy works.</p>
+  <div class="quick-chips">
+    <span class="chip" onclick="askQuestion('How do I register to vote?')">🗳️ How to register</span>
+    <span class="chip" onclick="askQuestion('What happens on election day?')">📋 Election day process</span>
+    <span class="chip" onclick="askQuestion('How are votes counted?')">🔢 Vote counting</span>
+    <span class="chip" onclick="askQuestion('What is the Electoral College?')">🏛️ Electoral College</span>
+    <span class="chip" onclick="askQuestion('Who can stand for election?')">👤 Candidacy rules</span>
+  </div>
+</div>
+
+<div class="main">
+  <!-- LEFT: MAIN CONTENT -->
+  <div>
+    <!-- TIMELINE VIEW -->
+    <div class="view active" id="timelineView">
+      <div class="section-title">Election Timeline</div>
+      <div class="section-sub" id="timelineSub">Step-by-step process for elections in your selected country</div>
+      
+      <button class="load-timeline-btn" id="loadBtn" onclick="loadTimeline()">
+        <span id="loadBtnText">⚡ Generate Timeline</span>
+      </button>
+
+      <div class="phase-legend">
+        <div class="phase-dot">Preparation</div>
+        <div class="phase-dot campaign">Campaign</div>
+        <div class="phase-dot voting">Voting</div>
+        <div class="phase-dot results">Results</div>
+      </div>
+
+      <div id="timelineContainer">
+        <div class="timeline-placeholder">
+          <div class="big-icon">🗳️</div>
+          <div>Select a country above and click <strong>Generate Timeline</strong></div>
+          <div style="font-size:0.8rem;margin-top:0.3rem;">AI will create a step-by-step election guide for you</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT VIEW -->
+    <div class="view" id="chatView">
+      <div class="section-title">Ask CivicGuide AI</div>
+      <div class="section-sub">Ask anything about elections, voting, or democracy</div>
+      <div class="chat-view-inner">
+        <div class="chat-messages" id="chatMessages">
+          <div class="message">
+            <div class="avatar bot">🗳️</div>
+            <div class="bubble">
+              <p>Hello! I'm <strong>CivicGuide AI</strong> — your AI guide to understanding elections.</p>
+              <p>I can explain how voting works, registration steps, campaign rules, vote counting, and much more. Select your country in the top bar, then ask me anything!</p>
+              <p>Try: <em>"How does voting work in India?"</em> or <em>"What is gerrymandering?"</em> 🏛️</p>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask about elections, voting rights, timelines..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: SIDEBAR -->
+  <div class="sidebar">
+    <!-- Quick Facts -->
+    <div class="sidebar-card">
+      <div class="sidebar-title">📌 Quick Facts</div>
+      <div id="quickFacts">
+        <div class="fact-item"><strong>Did you know?</strong>India has the world's largest electorate — over 960 million registered voters.</div>
+        <div class="fact-item"><strong>Oldest Democracy</strong>Athens, Greece introduced early forms of democratic voting around 508 BC.</div>
+        <div class="fact-item"><strong>Women's Suffrage</strong>New Zealand was the first country to grant women the right to vote, in 1893.</div>
+        <div class="fact-item"><strong>Electronic Voting</strong>India pioneered Electronic Voting Machines (EVMs) nationally in 2004.</div>
+      </div>
+    </div>
+
+    <!-- Quick Quiz -->
+    <div class="sidebar-card quiz-card">
+      <div class="sidebar-title">🧠 Quick Quiz</div>
+      <div id="quizContainer"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // State
+  let chatHistory = [];
+  let quizData = [];
+  let currentQuiz = 0;
+  let currentCountry = 'India';
+
+  const quizBank = [
+    { q: "What is a 'constituency' in elections?", opts: ["A type of ballot", "A geographic area that elects a representative", "A political party", "A voting machine"], ans: 1, exp: "A constituency is an area whose voters elect one or more representatives." },
+    { q: "What does 'first-past-the-post' mean?", opts: ["The fastest voter wins", "A candidate wins by getting the most votes", "Votes are ranked", "All candidates share power"], ans: 1, exp: "FPTP: the candidate with the most votes wins, even if below 50%." },
+    { q: "Which body conducts elections in India?", opts: ["Parliament of India", "Supreme Court", "Election Commission of India", "Prime Minister's Office"], ans: 2, exp: "The Election Commission of India is an independent constitutional body." },
+    { q: "What is 'voter turnout'?", opts: ["The number of polling stations", "Percentage of eligible voters who actually voted", "The count of spoiled ballots", "Number of candidates"], ans: 1, exp: "Voter turnout = (votes cast ÷ eligible voters) × 100." },
+    { q: "What is a 'ballot'?", opts: ["An election official", "A form of ID", "The document used to record a vote", "A type of constituency"], ans: 2, exp: "A ballot is the official form — paper or electronic — used to cast your vote." },
+    { q: "What is 'proportional representation'?", opts: ["Only men can vote proportionally", "Seats are distributed based on vote share", "One party takes all seats", "Voting by region only"], ans: 1, exp: "PR systems give parties seats proportional to the votes they receive." },
+    { q: "What does 'universal suffrage' mean?", opts: ["Only educated people can vote", "All adult citizens can vote regardless of class/gender/race", "Voting is optional", "Only taxpayers vote"], ans: 1, exp: "Universal suffrage = the right of all adults to vote, regardless of background." },
+  ];
+
+  function initQuiz() {
+    quizData = [...quizBank].sort(() => Math.random() - 0.5);
+    showQuiz(0);
+  }
+
+  function showQuiz(idx) {
+    currentQuiz = idx;
+    const q = quizData[idx % quizData.length];
+    document.getElementById('quizContainer').innerHTML = `
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((o, i) => `<button class="quiz-option" onclick="answerQuiz(${i}, ${q.ans}, '${q.exp.replace(/'/g, "\\'")}', this)">${o}</button>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+    `;
+  }
+
+  function answerQuiz(chosen, correct, exp, btn) {
+    const allBtns = document.querySelectorAll('.quiz-option');
+    allBtns.forEach(b => b.disabled = true);
+    if (chosen === correct) {
+      btn.classList.add('correct');
+      document.getElementById('quizFeedback').innerHTML = `✅ Correct! ${exp} <button class="next-quiz-btn" onclick="showQuiz(${currentQuiz + 1})">Next →</button>`;
+    } else {
+      btn.classList.add('wrong');
+      allBtns[correct].classList.add('correct');
+      document.getElementById('quizFeedback').innerHTML = `❌ Not quite. ${exp} <button class="next-quiz-btn" onclick="showQuiz(${currentQuiz + 1})">Next →</button>`;
+    }
+  }
+
+  // VIEW SWITCHING
+  function switchView(view) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (view === 'timeline') {
+      document.getElementById('timelineView').classList.add('active');
+      document.getElementById('tabTimeline').classList.add('active');
+    } else {
+      document.getElementById('chatView').classList.add('active');
+      document.getElementById('tabChat').classList.add('active');
+    }
+  }
+
+  // COUNTRY CHANGE
+  document.getElementById('countrySelect').addEventListener('change', function() {
+    currentCountry = this.value;
+    document.getElementById('timelineSub').textContent = `Step-by-step election process for ${currentCountry}`;
+  });
+
+  // TIMELINE
+  async function loadTimeline() {
+    const btn = document.getElementById('loadBtn');
+    const btnText = document.getElementById('loadBtnText');
+    const container = document.getElementById('timelineContainer');
+    currentCountry = document.getElementById('countrySelect').value;
+    
+    btn.disabled = true;
+    btnText.innerHTML = `<span class="spinner"></span> Generating...`;
+    container.innerHTML = '<div class="timeline-placeholder"><div class="big-icon">⏳</div><div>Building your election timeline...</div></div>';
+    
+    try {
+      const res = await fetch(`/timeline?country=${encodeURIComponent(currentCountry)}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      renderTimeline(data.steps, data.country);
+    } catch (e) {
+      container.innerHTML = `<div class="timeline-placeholder"><div class="big-icon">⚠️</div><div>Could not load timeline. Check API key setup.</div></div>`;
+    }
+    
+    btn.disabled = false;
+    btnText.textContent = '🔄 Regenerate';
+  }
+
+  function renderTimeline(steps, country) {
+    const container = document.getElementById('timelineContainer');
+    const phaseColors = { preparation: '', campaign: 'campaign', voting: 'voting', results: 'results' };
+    
+    container.innerHTML = `<div class="timeline">${steps.map(s => `
+      <div class="timeline-step">
+        <div class="step-node ${phaseColors[s.phase] || ''}">${s.icon}</div>
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-title">${s.title}</div>
+            <div class="step-duration">${s.duration}</div>
+          </div>
+          <div class="step-desc">${s.description}</div>
+          <button class="step-ask-btn" onclick="askAboutStep('${s.title.replace(/'/g,"\\'")}', '${country}')">Ask CivicGuide AI about this →</button>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  function askAboutStep(title, country) {
+    switchView('chat');
+    document.getElementById('chatInput').value = `Explain "${title}" in the ${country} election process in detail. What does a citizen need to know about this step?`;
+    sendMessage();
+  }
+
+  // CHAT
+  function askQuestion(q) {
+    switchView('chat');
+    document.getElementById('chatInput').value = q;
+    sendMessage();
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    const sendBtn = document.getElementById('sendBtn');
+    input.value = '';
+    input.style.height = 'auto';
+    sendBtn.disabled = true;
+    currentCountry = document.getElementById('countrySelect').value;
+
+    addMessage('user', text);
+    chatHistory.push({ role: 'user', content: text });
+
+    const typingId = addTyping();
+    
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: chatHistory, country: currentCountry })
+      });
+      const data = await res.json();
+      removeTyping(typingId);
+      
+      if (data.reply) {
+        addMessage('bot', data.reply);
+        chatHistory.push({ role: 'assistant', content: data.reply });
+      } else {
+        addMessage('bot', '⚠️ Sorry, something went wrong. Please try again.');
+      }
+    } catch (e) {
+      removeTyping(typingId);
+      addMessage('bot', '⚠️ Network error. Please check your connection.');
+    }
+    
+    sendBtn.disabled = false;
+  }
+
+  function addMessage(role, text) {
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    const html = markdownToHtml(text);
+    div.innerHTML = `
+      <div class="avatar ${role}">${role === 'bot' ? '🗳️' : 'You'}</div>
+      <div class="bubble">${html}</div>
+    `;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function addTyping() {
+    const msgs = document.getElementById('chatMessages');
+    const id = 'typing-' + Date.now();
+    msgs.innerHTML += `<div class="message" id="${id}"><div class="avatar bot">🗳️</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+  }
+
+  function removeTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  function markdownToHtml(text) {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^### (.+)$/gm, '<strong>$1</strong>')
+      .replace(/^## (.+)$/gm, '<strong>$1</strong>')
+      .replace(/^# (.+)$/gm, '<strong>$1</strong>')
+      .replace(/^[-•] (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/^(.+)$/gm, (m) => m.startsWith('<') ? m : `<p>${m}</p>`)
+      .replace(/<p><\/p>/g, '');
+  }
+
+  // INIT
+  initQuiz();
+</script>
+</body>
+</html>
