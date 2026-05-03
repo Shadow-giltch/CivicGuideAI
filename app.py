@@ -26,7 +26,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 # Google Gemini AI model configuration
 model = genai.GenerativeModel(
-    model_name="gemini-2.0-flash",
+    model_name="gemini-flash-latest",
     generation_config={
         "temperature": 0.7,
         "top_p": 0.8,
@@ -115,7 +115,7 @@ def health():
         "service": "CivicGuide AI",
         "version": "2.0.0",
         "ai_provider": "Google Gemini",
-        "model": "gemini-2.0-flash",
+        "model": "gemini-flash-latest",
         "api_configured": bool(GEMINI_API_KEY)
     }), 200
 
